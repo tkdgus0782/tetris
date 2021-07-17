@@ -145,7 +145,7 @@ class field{
 			}
 		}
 		this.now = new block(rand(0, 6));
-		this.timer = setInterval(drop, 1000);//1초마다 떨어지게 함.
+		this.timer = setInterval(this.now.drop, 1000);//1초마다 떨어지게 함.
 	}
 		
 	check(x, y){
