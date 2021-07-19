@@ -1,10 +1,15 @@
 
 //클래스들 및 너무 긴 상수들!
-const types = [2, 4, 4, 4, 1, 2, 2];//각 블록의 타입들의 회전시 나올수 있는 모양의 수.
+const types = [0, 2, 4, 4, 4, 1, 2, 2];//각 블록의 타입들의 회전시 나올수 있는 모양의 수.
 
-const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black'];
+const colors = ['white', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black'];
 
 const blocks = [
+	[
+		[
+			[]
+		]
+	],
 	[
 		[
 			[1, 0, 0, 0],
@@ -151,10 +156,10 @@ class field{
 		window.timer = setInterval(() => {this.update();}, 500);//1초마다 떨어지게 함.
 	}
 	
-	check(x, y){
+	check(x, y, r){
 		for(let i=0; i<4; i++){
 			for(let j=0; j<4; j++){
-				let temp = blocks[window.now.type][window.now.rotate % types[window.now.type]][i][j];
+				let temp = blocks[window.now.type][r % types[window.now.type]][i][j];
 				
 				if(temp == 1 && ((x + j > 9) || (x + j < 0))){
 					return false;
@@ -162,7 +167,7 @@ class field{
 				else if(temp == 1 && y + i > 19){
 					return false;
 				}
-				else if(y + i < 20 && x + j < 10 && temp + this.board[y + i][x + j] == 2){
+				else if(y + i < 20 && x + j < 10 && temp==1 && this.board[y + i][x + j] != 0){
 					return false;
 				}//체크하는 방향으로 이동할시 블록과 겹침 ==> 다른 가능한 방향으로 이동하지 않을시 현재위치로 고정됨!
 			}
@@ -171,21 +176,22 @@ class field{
 	}
 	
 	fix(){
-		for(let i=0; (i<4 && i + now.blockY < 20); i++){
-			for(let j=0; (j<4 && now.blockX < 10); j++){
-				if(1){
-					this.board[i + now.blockY][j + now.blockX] = window.now.type;
-					console.log(this.board);
+		console.log(now);
+		console.log(this.board);
+		for(let i=0; (i<4 && i + now.nowY < 20); i++){
+			for(let j=0; (j<4 && j + now.nowX < 10); j++){
+				if(blocks[now.type][now.rotate % types[now.type]][i][j]){
+					this.board[i + now.nowY][j + now.nowX] = window.now.type;
 				}
 			}
 		}
-		//window.now = new block(rand(0, 6));
+		window.now = new block(rand(1, 7));
 	}
 	
-	update(){
-		if(this.check(window.now.nowX, window.now.nowY + 1) == true){
+	async update(){
+		if(this.check(window.now.nowX, window.now.nowY + 1, window.now.rotate) == true){
 			window.now.drop();
-		}
+		}//내려갈수 있다면? 내려간다.
 		else{
 			this.fix();
 		}
@@ -209,7 +215,7 @@ class block{ // 현재 조종하는중인 테트리스 블록에 관한 클래�
 		this.nowX += 1;
 	}
 	
-	rotate(){
+	goRotate(){
 		this.rotate += 1;
 	}
 	
@@ -226,9 +232,12 @@ function init(){
 	window.scr = canvas.getContext('2d');
 	
 	window.addEventListener('resize', updateSize);
+	window.addEventListener('keydown', (e) => {clicked(e);});
+	window.addEventListener('keyup', (e) => {unclicked(e);});
 
 	updateSize();
 	window.blockL = canvas.height / 25;
+	window.Flag = [0, 0, 0, 0];
 	
 	window.tetris = new field();
 	console.log(tetris.board);
@@ -241,6 +250,51 @@ function updateSize(){
 }
 
 // 게임로직에 관련된 함수들
+
+function clicked(click){
+	if(click.key == "ArrowDown"){
+		if(Flag[0] == 0){
+			clearInterval(timer);
+			timer = setInterval(() => {tetris.update();}, 250);
+			Flag[0]++;
+		}
+	}//하강
+	else if(click.key == "ArrowLeft"){
+		if(tetris.check(now.nowX - 1, now.nowY, now.rotate) && Flag[1] == 0){
+			now.goLeft();
+		}
+		Flag[1]++;
+	}//왼쪽
+	else if(click.key == "ArrowRight"){
+		if(tetris.check(now.nowX  + 1, now.nowY, now.rotate)  && Flag[2] == 0){
+			now.goRight();
+		}
+		Flag[2]++;
+	}//오른쪽
+	else if(Flag[3] == 0){
+		if(tetris.check(now.nowX, now.nowY, now.rotate+1)  && Flag[3] == 0){
+			now.goRotate();
+		}
+		Flag[3]++;
+	}//회전
+}
+
+function unclicked(click){
+	if(click.key == "ArrowDown"){
+		clearInterval(timer);
+		timer = setInterval(() => {tetris.update();}, 500);
+		Flag[0] = 0;
+	}//하강
+	else if(click.key == "ArrowLeft"){
+		Flag[1] = 0;
+	}//왼쪽
+	else if(click.key == "ArrowRight"){
+		Flag[2] = 0;
+	}//오른쪽
+	else{
+		Flag[3] = 0;
+	}//회전
+}
 
 function rand(m, M){
 	return Math.floor(Math.random()*(M-m)) + m;
@@ -257,7 +311,7 @@ function gameover(){
 //게임의 요소의 출력에 관련된 함수들
 
 function play(){
-	window.playing = setInterval(draw, 1000);
+	window.playing = setInterval(draw, 10);
 }
 
 function draw(){
@@ -298,4 +352,3 @@ function drawField(){
 		}
 	}
 }
-
