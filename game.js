@@ -152,8 +152,8 @@ class field{
 				this.board[i].push(0);
 			}
 		}
-		window.now = new block(rand(0, 6));
-		window.timer = setInterval(() => {this.update();}, 500);//1초마다 떨어지게 함.
+		window.now = new block(rand(1, 8));
+		window.timer = setInterval(() => {this.update();}, 500);//0.5초마다 떨어지게 함.
 	}
 	
 	check(x, y, r){
@@ -175,9 +175,37 @@ class field{
 		return true;
 	}
 	
+	checkLine(now){
+		let flag = true;
+		for(let i=0; i<10; i++){
+			(this.board[now][i]==0 ? flag=false : 1);
+		}
+		return flag;
+	}
+	
+	skipLine(now){
+		for(let i=now; i>0; i--){
+			for(let j=0; j<10; j++){
+				this.board[i][j] = this.board[i-1][j];
+			}
+		}
+		this.board[0] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	}
+	
+	eraseLine(){
+		for(let i=19; i>=0; i--){
+			if(this.checkLine(i)){
+				this.skipLine(i);
+				i++;
+			}//한줄 지웠으므로 다시 현재칸 검사!
+		}
+	}
+	
 	fix(){
-		console.log(now);
-		console.log(this.board);
+		if(now.nowY == 0){
+			gameover();
+			return 0;
+		}
 		for(let i=0; (i<4 && i + now.nowY < 20); i++){
 			for(let j=0; (j<4 && j + now.nowX < 10); j++){
 				if(blocks[now.type][now.rotate % types[now.type]][i][j]){
@@ -185,10 +213,13 @@ class field{
 				}
 			}
 		}
-		window.now = new block(rand(1, 7));
+		
+		this.eraseLine();
+		
+		window.now = new block(rand(1, 8));
 	}
 	
-	async update(){
+	update(){
 		if(this.check(window.now.nowX, window.now.nowY + 1, window.now.rotate) == true){
 			window.now.drop();
 		}//내려갈수 있다면? 내려간다.
@@ -225,7 +256,7 @@ class block{ // 현재 조종하는중인 테트리스 블록에 관한 클래�
 }
 
 
-//초기화및 화면 관련 함수
+//초기화및 화면 관련 함수ㄷㄱㄹ
 
 function init(){
 	window.canvas = document.getElementById('screen');
@@ -236,12 +267,16 @@ function init(){
 	window.addEventListener('keyup', (e) => {unclicked(e);});
 
 	updateSize();
-	window.blockL = canvas.height / 25;
+	window.blockL = canvas.height / 20;
+	window.game = canvas.width/2 - blockL * 5;
 	window.Flag = [0, 0, 0, 0];
 	
 	window.tetris = new field();
-	console.log(tetris.board);
-	play();
+	
+	return new Promise(function(resolve, reject){
+		console.log("loading complete!")
+		resolve();
+	})
 }	
 
 function updateSize(){
@@ -249,13 +284,20 @@ function updateSize(){
 	window.canvas.height = document.body.clientHeight;
 }
 
+function play(){
+	init().then(loop);
+}
+
+function loop(){
+	window.playing = setInterval(draw, 10);
+}
 // 게임로직에 관련된 함수들
 
 function clicked(click){
 	if(click.key == "ArrowDown"){
 		if(Flag[0] == 0){
 			clearInterval(timer);
-			timer = setInterval(() => {tetris.update();}, 250);
+			timer = setInterval(() => {tetris.update();}, 100);
 			Flag[0]++;
 		}
 	}//하강
@@ -310,9 +352,7 @@ function gameover(){
 
 //게임의 요소의 출력에 관련된 함수들
 
-function play(){
-	window.playing = setInterval(draw, 10);
-}
+
 
 function draw(){
 	scr.clearRect(0,0,canvas.width,canvas.height);
@@ -329,7 +369,7 @@ function drawField(){
 	for(let i=0; i<20; i++){
 		for(let j=0; j<10; j++){
 			scr.fillStyle = 'white';
-			scr.fillRect(j*blockL, i*blockL, blockL, blockL);
+			scr.fillRect(game + j*blockL, i*blockL, blockL, blockL);
 		}
 	}
 	
@@ -338,7 +378,7 @@ function drawField(){
 			if(tetris.board[i][j])
 			{
 				scr.fillStyle = colors[tetris.board[i][j]];
-				scr.fillRect(j*blockL, i*blockL, blockL, blockL);
+				scr.fillRect(game + j*blockL, i*blockL, blockL, blockL);
 			}
 		}
 	}
@@ -347,7 +387,7 @@ function drawField(){
 		for(let j=0; j<4; j++){
 			scr.fillStyle = colors[now.type];
 			if(blocks[now.type][now.rotate % types[now.type]][i][j]){
-				scr.fillRect((now.nowX+j)*blockL, (now.nowY+i)*blockL, blockL, blockL);
+				scr.fillRect(game + (now.nowX+j)*blockL, (now.nowY+i)*blockL, blockL, blockL);
 			}
 		}
 	}
