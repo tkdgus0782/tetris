@@ -201,6 +201,18 @@ class field{
 		}
 	}
 	
+	dropSoft(){
+		clearInterval(timer);
+		timer = setInterval(() => {tetris.update();}, 100);
+	}
+	
+	dropHard(){
+		while(tetris.check(now.nowX, now.nowY + 1, now.rotate)){
+			now.drop();
+		}
+		tetris.update();
+	}
+	
 	fix(){
 		if(now.nowY == 0){
 			gameover();
@@ -269,7 +281,7 @@ function init(){
 	updateSize();
 	window.blockL = canvas.height / 20;
 	window.game = canvas.width/2 - blockL * 5;
-	window.Flag = [0, 0, 0, 0];
+	window.Flag = [0, 0, 0, 0, 0];
 	
 	window.tetris = new field();
 	
@@ -295,11 +307,10 @@ function loop(){
 
 function clicked(click){
 	if(click.key == "ArrowDown"){
-		if(Flag[0] == 0){
-			clearInterval(timer);
-			timer = setInterval(() => {tetris.update();}, 100);
-			Flag[0]++;
+		if(!Flag[0]){
+			tetris.dropSoft();
 		}
+		Flag[0]++;
 	}//하강
 	else if(click.key == "ArrowLeft"){
 		if(tetris.check(now.nowX - 1, now.nowY, now.rotate) && Flag[1] == 0){
@@ -313,12 +324,18 @@ function clicked(click){
 		}
 		Flag[2]++;
 	}//오른쪽
+	else if(click.key == " " && Flag[4] == 0){
+		tetris.dropHard();
+		Flag[4]++;
+	}
+	
 	else if(Flag[3] == 0){
 		if(tetris.check(now.nowX, now.nowY, now.rotate+1)  && Flag[3] == 0){
 			now.goRotate();
 		}
 		Flag[3]++;
 	}//회전
+	
 }
 
 function unclicked(click){
@@ -333,6 +350,9 @@ function unclicked(click){
 	else if(click.key == "ArrowRight"){
 		Flag[2] = 0;
 	}//오른쪽
+	else if(click.key == " "){
+		Flag[4] = 0;
+	}
 	else{
 		Flag[3] = 0;
 	}//회전
