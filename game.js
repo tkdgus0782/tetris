@@ -2,7 +2,15 @@
 //클래스들 및 너무 긴 상수들!
 const types = [0, 2, 4, 4, 4, 1, 2, 2];//각 블록의 타입들의 회전시 나올수 있는 모양의 수.
 
-const colors = ['white', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black'];
+const colors = ['white', 
+				'red', 
+				'orange', 
+				'yellow', 
+				'green', 
+				'blue', 
+				'purple', 
+				'black'
+			   ];
 
 const blocks = [
 	[
@@ -152,7 +160,6 @@ class field{
 				this.board[i].push(0);
 			}
 		}
-		window.now = new block(rand(1, 8));
 		window.timer = setInterval(() => {this.update();}, 500);//0.5초마다 떨어지게 함.
 	}
 	
@@ -211,6 +218,13 @@ class field{
 			now.drop();
 		}
 		tetris.update();
+	}
+	
+	preview(){
+		pY = now.nowY;
+		while(tetris.check(now.nowX, pY + 1, now.rotate)){
+			pY++;
+		}
 	}
 	
 	fix(){
@@ -284,6 +298,8 @@ function init(){
 	window.Flag = [0, 0, 0, 0, 0];
 	
 	window.tetris = new field();
+	window.now = new block(rand(1, 8));
+	window.pY = 0;
 	
 	return new Promise(function(resolve, reject){
 		console.log("loading complete!")
@@ -375,24 +391,27 @@ function gameover(){
 
 
 function draw(){
+	tetris.preview();
 	scr.clearRect(0,0,canvas.width,canvas.height);
 	drawBackground();
 	drawField();
+	drawPreview();
+	drawBlock();
 }
 
 function drawBackground(){
 	scr.fillStyle = 'rgba(100, 100, 100, 0.7)';
 	scr.fillRect(0,0,canvas.width,canvas.height);
-}
-
-function drawField(){
+	
 	for(let i=0; i<20; i++){
 		for(let j=0; j<10; j++){
 			scr.fillStyle = 'white';
 			scr.fillRect(game + j*blockL, i*blockL, blockL, blockL);
 		}
 	}
-	
+}
+
+function drawField(){
 	for(let i=0; i<20; i++){
 		for(let j=0; j<10; j++){
 			if(tetris.board[i][j])
@@ -402,7 +421,24 @@ function drawField(){
 			}
 		}
 	}
+}
+
+function drawPreview(){
+	scr.globalAlpha = 0.4;
 	
+	for(let i=0; i<4; i++){
+		for(let j=0; j<4; j++){
+			scr.fillStyle = colors[now.type];
+			if(blocks[now.type][now.rotate % types[now.type]][i][j]){
+				scr.fillRect(game + (now.nowX+j)*blockL, (pY+i)*blockL, blockL, blockL);
+			}
+		}
+	}
+	
+	scr.globalAlpha = 1;
+}
+
+function drawBlock(){
 	for(let i=0; i<4; i++){
 		for(let j=0; j<4; j++){
 			scr.fillStyle = colors[now.type];
